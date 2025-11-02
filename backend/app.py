@@ -1,4 +1,4 @@
-from flask import Flask, jsonify
+from flask import Flask, jsonify, send_from_directory
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager
 from database import db, init_db
@@ -6,11 +6,11 @@ from config import Config
 import os
 
 # Initialize Flask app
-app = Flask(__name__)
+app = Flask(__name__, static_folder='../frontend/out', static_url_path='')
 app.config.from_object(Config)
 
 # Initialize extensions
-CORS(app, resources={r"/api/*": {"origins": "*"}})
+CORS(app)
 jwt = JWTManager(app)
 db.init_app(app)
 
@@ -21,16 +21,25 @@ from routes.driver import driver_bp
 from routes.admin import admin_bp
 from routes.payment import payment_bp
 
-# Register blueprints
+# Register blueprints with /api prefix
 app.register_blueprint(auth_bp, url_prefix='/api/auth')
 app.register_blueprint(booking_bp, url_prefix='/api/booking')
 app.register_blueprint(driver_bp, url_prefix='/api/driver')
 app.register_blueprint(admin_bp, url_prefix='/api/admin')
 app.register_blueprint(payment_bp, url_prefix='/api/payment')
 
-# Root endpoint
-@app.route('/')
-def index():
+# Serve React App
+@app.route('/', defaults={'path': ''})
+@app.route('/<path:path>')
+def serve(path):
+    if path != "" and os.path.exists(app.static_folder + '/' + path):
+        return send_from_directory(app.static_folder, path)
+    else:
+        return send_from_directory(app.static_folder, 'index.html')
+
+# API root endpoint
+@app.route('/api')
+def api_root():
     return jsonify({
         'message': 'Sri Ramalingeshvara Transport Agency API',
         'version': '1.0',
@@ -38,7 +47,7 @@ def index():
     })
 
 # Health check endpoint
-@app.route('/health')
+@app.route('/api/health')
 def health():
     return jsonify({'status': 'healthy'}), 200
 
