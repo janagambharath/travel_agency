@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: transport-system
+    env: python
+    region: singapore
+    buildCommand: "./build.sh"
+    startCommand: "cd backend && gunicorn app:app"
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: NODE_VERSION
+        value: 18.17.0
